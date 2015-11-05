@@ -5,10 +5,229 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/css/reset.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.css">
     <script src="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="app.css">
+    <link rel="stylesheet" type="text/css" href="simple-line-icons.css">
+    <link rel="stylesheet" type="text/css" href="weather-icons.css">
+    <link rel="stylesheet" type="text/css" href="font-awesome.min.css">
+
+
   </head>
   <body class="mixpanel-platform-body">
+  <div class="content-wrapper">
+            <div class="content-heading">
+               <!-- START Language list-->
+               <div class="pull-right">
+               </div>
+               <!-- END Language list    -->
+               ESPN's Real-Time User Dashboard
+               <small data-localize="dashboard.WELCOME"></small>
+            </div>
+            <!-- START widgets box-->
+            <div class="row">
+               <div class="col-lg-3 col-sm-6">
+                  <!-- START widget-->
+                  <div class="panel widget bg-primary">
+                     <div class="row row-table">
+                        <div class="col-xs-4 text-center bg-primary-dark pv-lg">
+                           <!--<em class="icon-cloud-upload fa-3x"></em>-->
+                        </div>
+                        <div class="col-xs-8 pv-lg">
+                           <div class="h2 mt0 current-users">0</div>
+                           <div class="text-uppercase">Current Users</div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <div class="col-lg-3 col-sm-6">
+                  <!-- START widget-->
+                  <div class="panel widget bg-purple">
+                     <div class="row row-table">
+                        <div class="col-xs-4 text-center bg-purple-dark pv-lg">
+                           <!--<em class="icon-globe fa-3x"></em>-->
+                        </div>
+                        <div class="col-xs-8 pv-lg">
+                           <div class="h2 mt0 monthly-actives">0
+                              <!--<small>GB</small>-->
+                           </div>
+                           <div class="text-uppercase">Monthly Actives</div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <div class="col-lg-3 col-md-6 col-sm-12">
+                  <!-- START widget-->
+                  <div class="panel widget bg-green">
+                     <div class="row row-table">
+                        <div class="col-xs-4 text-center bg-green-dark pv-lg">
+                           <!--<em class="icon-bubbles fa-3x"></em>-->
+                        </div>
+                        <div class="col-xs-8 pv-lg">
+                           <div class="h2 mt0 daily-actives">0</div>
+                           <div class="text-uppercase">Daily Actives</div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <div class="col-lg-3 col-md-6 col-sm-12">
+                  <!-- START date widget-->
+                  <div class="panel widget">
+                     <div class="row row-table">
+                        <div class="col-xs-4 text-center bg-green pv-lg">
+                           <!-- See formats: https://docs.angularjs.org/api/ng/filter/date-->
+                           <div data-now="" data-format="MMMM" class="text-sm date-month"></div>
+                           <br>
+                           <div data-now="" data-format="D" class="h2 mt0 date-day"></div>
+                        </div>
+                        <div class="col-xs-8 pv-lg">
+                           <div data-now="" data-format="dddd" class="text-uppercase date-actual-day"></div>
+                           <br>
+                           <div data-now="" data-format="h:mm" class="h2 mt0 date-time"></div>
+                           <div data-now="" data-format="a" class="text-muted text-sm date-pm"></div>
+                        </div>
+                     </div>
+                  </div>
+                  <!-- END date widget    -->
+               </div>
+            </div>
+            
     <script>
+        /* Also, she asked about chartbeat style reports (number of simultaneous users). 
+        do you think we could do these with custom reports as well? I imagine it would be just like the number of unique users who sent some selection of events at 
+        least once in the last 5 min, or 10 min, or whatever we decided would be our definition of "simultaneity" */
+        /* Query Segmentation for a Union of events that have happened in the last minute */
 
+        /* Set API Credentials for localhost development */
+        MP.api.setCredentials('802636634bb7c18bc2c0dd98ac537072','a60273cdfb3c62ff4ea232b6908499b9')
+
+        /* Get top events */
+
+        events = [];
+        MP.api.topEvents().done(function(results) {
+          _.each(_.values(results.values()), function(value){
+              events.push(value);
+          })
+          refresh();
+        });
+
+
+        var refresh = function(){
+          /* Get total event counts */
+            var query = MP.api.query('/api/2.0/events/', {event:events, unit: 'minute', union: 1, type:'unique'}, {dataType: 'json'})
+            query.done(function(json) {
+              var values = json.data.values;
+              var data = _.values(json.data.values)[0];
+
+              /* iterate through the keys in the values dictionary in reverse order.  grab the first and second that have data*/
+              var sortedKeys = _.keys(data)
+
+              /* sort and reverse */
+              sortedKeys.sort()
+              sortedKeys.reverse()
+              var current = 0
+              var lastMinute = 0
+              var count = 0
+
+              while (count <= sortedKeys.length) {
+                  if (data[sortedKeys[count]] > 0) {
+                      console.log(sortedKeys[count])
+                      console.log(sortedKeys[count + 1])
+                      current = data[sortedKeys[count]]
+                      try {
+                          lastMinute = data[sortedKeys[count + 1]]
+                      } catch (err){
+                          lastMinute = data[sortedKeys[0]]
+                      }
+                      break;
+                  }
+                  count ++
+              }
+              console.log(current, lastMinute)
+              var totalCurrentUsers = current + lastMinute;
+              $('.current-users').text(totalCurrentUsers.toString());
+              /* Show this now */
+
+            })
+            /* Query for Monthly Active Users */
+            var monthlyQuery = MP.api.query('/api/2.0/events/', {event:events, unit: 'month', union: 1, type:'unique'}, {dataType: 'json'}) 
+            monthlyQuery.done(function(json){
+                console.log(json)
+                var data = _.values(json.data.values)
+                var monthlyActives = _.values(data[0])[0]
+
+                $('.monthly-actives').text(monthlyActives.toString());
+            });
+
+            var dailyQuery = MP.api.query('/api/2.0/events/', {event:events, unit: 'day', union: 1, interval:1, type:'unique'}, {dataType: 'json'});
+            dailyQuery.done(function(json){
+
+                var data = _.values(json.data.values)[0];
+                var dataKeys = _.keys(data).sort().reverse()
+                var dailyActives = data[dataKeys[0]];
+                console.log(dailyActives);
+                $('.daily-actives').text(dailyActives.toString());
+            })
+            /* Date Refresh */
+            var date = new Date();
+            var day = date.getDate()
+            var hours = date.getHours()
+            var ampm = hours >= 12 ? 'pm' : 'am';
+            var time = date.getHours().toString() + ':' + pad(date.getMinutes()).toString();
+            var month = getCurrentMonth();
+            var actualDay = getCurrentDay();
+
+            $('.date-month').text(month);
+            $('.date-actual-day').text(actualDay);
+            $('.date-day').text(day.toString());
+            $('.date-time').text(time);
+            $('.date-pm').text(ampm);
+
+
+        }
+        setInterval(refresh, 30000);
+
+        function pad(d) {
+            return (d < 10) ? '0' + d.toString() : d.toString();
+        }
+
+
+        function getCurrentMonth(){
+
+            var d = new Date();
+
+            var month = new Array();
+            month[0] = "January";
+            month[1] = "February";
+            month[2] = "March";
+            month[3] = "April";
+            month[4] = "May";
+            month[5] = "June";
+            month[6] = "July";
+            month[7] = "August";
+            month[8] = "September";
+            month[9] = "October";
+            month[10] = "November";
+            month[11] = "December";
+            var n = month[d.getMonth()];
+
+            return n;
+        }
+
+        function getCurrentDay(){
+            var d = new Date();
+            var weekday = new Array(7);
+            weekday[0]=  "Sunday";
+            weekday[1] = "Monday";
+            weekday[2] = "Tuesday";
+            weekday[3] = "Wednesday";
+            weekday[4] = "Thursday";
+            weekday[5] = "Friday";
+            weekday[6] = "Saturday";
+
+            var n = weekday[d.getDay()];
+            return n;
+        }
 
     </script>
   </body>

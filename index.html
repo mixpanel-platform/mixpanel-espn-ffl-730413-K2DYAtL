@@ -27,8 +27,8 @@
   <div class="content-wrapper">
             <div class="content-heading text-center">
                <!-- START Language list-->
-               <div class="pull-right">
-                  <img style="bottom: 10px;" src="https://d018d7277c9a2a72c253b637c4abe4d24d29449c.googledrive.com/host/0BxwayM8qQaCVOGZvekkxYTNSZVU" height="40px" width="120px">
+               <div class="pull-right" style="bottom: 10px;">
+                  <img src="https://d018d7277c9a2a72c253b637c4abe4d24d29449c.googledrive.com/host/0BxwayM8qQaCVOGZvekkxYTNSZVU" height="40px" width="120px">
                   <!--<img src="ESPN-Dashboard@2x.png">-->
                </div>
                <div class="pull-left">
@@ -176,6 +176,9 @@
           return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
         }
 
+        function addCommas(intNum) {
+          return (intNum + '').replace(/(\d)(?=(\d{3})+$)/g, '$1,');
+        }
 
         var refresh = function(){
           /* Get total event counts */
@@ -208,9 +211,9 @@
                   }
                   count ++
               }
-              console.log(current, lastMinute)
+
               var totalCurrentUsers = current + lastMinute;
-              $('.current-users').text(totalCurrentUsers.toString());
+              $('.current-users').text(addCommas(totalCurrentUsers));
               /* Show this now */
 
             })
@@ -221,7 +224,7 @@
                 var data = _.values(json.data.values)
                 var monthlyActives = _.values(data[0])[0]
 
-                $('.monthly-actives').text(monthlyActives.toString());
+                $('.monthly-actives').text(addCommas(monthlyActives));
             });
 
             var dailyQuery = MP.api.query('/api/2.0/events/', {event:events, unit: 'day', union: 1, interval:1, type:'unique'}, {dataType: 'json'});
@@ -231,14 +234,15 @@
                 var dataKeys = _.keys(data).sort().reverse()
                 var dailyActives = data[dataKeys[0]];
                 console.log(dailyActives);
-                $('.daily-actives').text(dailyActives.toString());
+                $('.daily-actives').text(addCommas(dailyActives));
             })
             /* Date Refresh */
             var date = new Date();
             var day = date.getDate()
-            var hours = date.getHours()
+            var hours = date.getHours();
+            var convertedHours = hours <= 12 ? hours : hours - 12;
             var ampm = hours >= 12 ? 'pm' : 'am';
-            var time = date.getHours().toString() + ':' + pad(date.getMinutes()).toString();
+            var time = convertedHours.toString() + ':' + pad(date.getMinutes()).toString();
             var month = getCurrentMonth();
             var actualDay = getCurrentDay();
 
